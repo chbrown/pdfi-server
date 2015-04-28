@@ -1,8 +1,12 @@
 {
   "name": "pdfi-server",
   "description": "pdfi http API server",
-  "keywords" : ["pdf", "pdfi", "server"],
-  "version": "0.1.0",
+  "keywords": [
+    "pdf",
+    "pdfi",
+    "server"
+  ],
+  "version": "0.2.0",
   "homepage": "https://github.com/chbrown/pdfi-server",
   "repository": "git://github.com/chbrown/pdfi-server.git",
   "author": "Christopher Brown <io@henrian.com> (http://henrian.com)",
