@@ -33,6 +33,8 @@ http.ServerResponse.prototype.die = function(error) {
 };
 
 module.exports = http.createServer(function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', '*');
   controllers(req, res);
 })
 .on('listening', function() {
