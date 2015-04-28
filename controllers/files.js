@@ -9,19 +9,16 @@ var formidable = require('formidable');
 var logger = require('loge');
 var Router = require('regex-router');
 
-var pdflib = require('pdf');
-var pdf_models = require('pdf/models');
-var StackOperationParser = require('pdf/parsers/StackOperationParser');
+var pdfi = require('pdfi');
+var pdfi_models = require('pdfi/models');
 
-pdflib.logger.level = logger.level;
+pdfi.logger.level = logger.level;
 
 var files_dirpath = process.env.UPLOADS;
 
 var R = new Router(function(req, res) {
   res.status(404).die('No resource at: ' + req.url);
 });
-
-// R.any(/^\/files\/[^\/]+\/objects/, require('./objects'));
 
 /** GET /files
 
@@ -51,7 +48,7 @@ R.get(/^\/files$/, function(req, res) {
 
 Upload new file.
 */
-R.post(/^\/files$/, function(req, res, m) {
+R.post(/^\/files$/, function(req, res) {
   /** formidable.IncomingForm#parse(request: http.IncomingMessage,
                                     callback: (...))
 
@@ -76,7 +73,7 @@ R.post(/^\/files$/, function(req, res, m) {
         }
       }
   */
-  var form = new formidable.IncomingForm({multiples: true})
+  new formidable.IncomingForm({multiples: true})
   .on('fileBegin', function(name, file) {
     file.path = path.join(files_dirpath, file.name);
     logger.info('fileBegin', name, file);
@@ -94,34 +91,13 @@ function loadPDF(uri_name, res, callback) {
   try {
     if (!(name in pdf_cache)) {
       var filepath = path.join(files_dirpath, name);
-      pdf_cache[name] = pdflib.PDF.open(filepath);
+      pdf_cache[name] = pdfi.PDF.open(filepath);
     }
     callback(pdf_cache[name]);
   }
   catch (error) {
     return res.die(error);
   }
-}
-
-function parseStackOperations(string) {
-  var string_iterable = new lexing.StringIterator(string);
-  var stack_operation_iterator = new StackOperationParser().map(string_iterable);
-  var tokens = [];
-  try {
-    while (1) {
-      var token = stack_operation_iterator.next();
-      if (token.name === 'EOF') {
-        break;
-      }
-      var token_object = {};
-      token_object[token.name] = token.value;
-      tokens.push(token_object);
-    }
-  }
-  catch (error) {
-    logger.error('StackOperationParser exception: %s', error.message);
-  }
-  return tokens;
 }
 
 /** GET /files/:name
@@ -136,6 +112,16 @@ R.get(/^\/files\/([^\/]+)$/, function(req, res, m) {
       trailer: _.omit(pdf.trailer._object, 'ID'), // who needs the ID?
       cross_references: pdf.cross_references,
     });
+  });
+});
+
+/** GET /files/:name/document
+*/
+R.get(/^\/files\/([^\/]+)\/document$/, function(req, res, m) {
+  loadPDF(m[1], res, function(pdf) {
+    var section_names = ['col1', 'col2'];
+    var document = pdf.getDocument(section_names);
+    res.json(document);
   });
 });
 
@@ -179,7 +165,6 @@ R.get(/^\/files\/([^\/]+)\/pages\/(\d+)\/contents$/, function(req, res, m) {
     // subtract one to change indexing from 1-based to 0-based
     var page = pdf.pages[page_number - 1];
     var Contents = page.joinContents('\n'); // returns a string
-    // var tokens = parseStackOperations(Contents);
 
     res.json({
       Contents: Contents,
@@ -189,7 +174,7 @@ R.get(/^\/files\/([^\/]+)\/pages\/(\d+)\/contents$/, function(req, res, m) {
 });
 
 /** GET /files/:name/objects */
-R.get(/^\/files\/([^\/]+)\/objects$/, function(req, res, m) {
+R.get(/^\/files\/([^\/]+)\/objects$/, function(req, res) {
   res.die('Not yet implemented');
 });
 
@@ -203,8 +188,8 @@ R.get(/^\/files\/([^\/]+)\/objects\/(\d+)(\?.+|$)/, function(req, res, m) {
 
     var object = pdf.getObject(object_number, generation_number);
 
-    if (pdf_models.ContentStream.isContentStream(object)) {
-      var content_stream = new pdf_models.ContentStream(pdf, object);
+    if (pdfi_models.ContentStream.isContentStream(object)) {
+      var content_stream = new pdfi_models.ContentStream(pdf, object);
       var decoded_object = _.clone(object);
       decoded_object.buffer = content_stream.buffer;
       return res.json(decoded_object);
@@ -225,14 +210,14 @@ R.get(/^\/files\/([^\/]+)\/objects\/(\d+)\/extra(\?.+|$)/, function(req, res, m)
     // getObject returns the cached object from the pdf lib -- don't modify it!
     var object = pdf.getObject(object_number, generation_number);
 
-    if (pdf_models.ContentStream.isContentStream(object)) {
-      var content_stream = new pdf_models.ContentStream(pdf, object);
+    if (pdfi_models.ContentStream.isContentStream(object)) {
+      var content_stream = new pdfi_models.ContentStream(pdf, object);
 
       var decoded_object = _.clone(object);
       decoded_object.buffer = content_stream.buffer;
 
       if (content_stream.dictionary.Type == 'XObject' && content_stream.dictionary.Subtype == 'Form') {
-        var canvas = new pdflib.drawing.Canvas(content_stream.dictionary.BBox);
+        var canvas = new pdfi.drawing.Canvas(content_stream.dictionary.BBox);
         var stream_string = content_stream.buffer.toString('binary');
         var stream_string_iterable = new lexing.StringIterator(stream_string);
         try {
@@ -241,18 +226,34 @@ R.get(/^\/files\/([^\/]+)\/objects\/(\d+)\/extra(\?.+|$)/, function(req, res, m)
         catch (exception) {
           return res.json({object: decoded_object, error: exception.stack});
         }
-        // object.tokens = parseStackOperations(object.buffer);
         return res.json({object: decoded_object.dictionary, canvas: canvas, buffer: decoded_object.buffer});
       }
 
       return res.json({object: decoded_object});
     }
-    else if (pdf_models.Font.isFont(object)) {
-      var font = new pdf_models.Font(pdf, object);
-      return res.json({object: object, Mapping: font.getCharCodeMapping()});
+    else if (object['Type'] === 'Font') {
+      if (object['Subtype'] === 'Type0') {
+        var type0Font = new pdfi_models.Type0Font(pdf, object);
+        type0Font._initializeWidthMapping();
+        return res.json({object: object, Mapping: _.extend({}, type0Font._widthMapping)});
+      }
+      else if (object['Subtype'] === 'Type1') {
+        var type1Font = new pdfi_models.Type1Font(pdf, object);
+        type1Font._initializeWidthMapping();
+        return res.json({object: object, Mapping: type1Font._widthMapping});
+      }
+      else if (object['Subtype'] === 'TrueType') {
+        var trueTypeFont = new pdfi_models.Type1Font(pdf, object);
+        trueTypeFont._initializeWidthMapping();
+        return res.json({object: object, Mapping: trueTypeFont._widthMapping});
+      }
     }
-    else if (pdf_models.Encoding.isEncoding(object)) {
-      var encoding = new pdf_models.Encoding(pdf, object);
+    else if (pdfi_models.Font.isFont(object)) {
+
+
+    }
+    else if (pdfi_models.Encoding.isEncoding(object)) {
+      var encoding = new pdfi_models.Encoding(pdf, object);
       return res.json({object: object, Mapping: encoding.Mapping});
     }
 
