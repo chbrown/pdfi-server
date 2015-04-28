@@ -1,9 +1,9 @@
-# pdf-ui
+# pdfi-server
 
-User interface for visualizing PDF structure
+[`pdfi`](https://github.com/chbrown/pdfi) http API server.
 
-    npm install -g pdf-ui
-    pdf-ui
+    npm install -g pdfi-server
+    pdfi-server
 
 
 ## License

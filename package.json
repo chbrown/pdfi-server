@@ -1,17 +1,17 @@
 {
-  "name": "pdf-ui",
-  "description": "User interface for visualizing PDF structure",
-  "keywords" : ["pdf", "user", "interface"],
+  "name": "pdfi-server",
+  "description": "pdfi http API server",
+  "keywords" : ["pdf", "pdfi", "server"],
   "version": "0.1.0",
-  "homepage": "https://github.com/chbrown/pdf-ui",
-  "repository": "git://github.com/chbrown/pdf-ui.git",
+  "homepage": "https://github.com/chbrown/pdfi-server",
+  "repository": "git://github.com/chbrown/pdfi-server.git",
   "author": "Christopher Brown <io@henrian.com> (http://henrian.com)",
   "license": "MIT",
   "bin": {
-    "pdf-ui": "bin/pdf-ui"
+    "pdfi-server": "bin/pdfi-server"
   },
   "scripts": {
-    "start": "node bin/pdf-ui"
+    "start": "node bin/pdfi-server"
   },
   "dependencies": {
     "async": "*",
@@ -20,26 +20,8 @@
     "lexing": "*",
     "lodash": "*",
     "loge": "*",
-    "pdf": "*",
+    "pdfi": "*",
     "regex-router": "*",
-    "send": "*",
     "yargs": "*"
-  },
-  "devDependencies": {
-    "mocha": "*",
-    "react-tools": "*",
-    "typescript": "*"
-  },
-  "staticPattern": "static/lib/{file}",
-  "staticDependencies": {
-    "angular": "*",
-    "angular-ui-router": "*",
-    "lodash": "*",
-    "misc-js": {
-      "url": "git://github.com/chbrown/misc-js.git",
-      "filter": ["angular-plugins.js", "angular-plugins.min.js", "textarea.js"]
-    },
-    "ng-storage": "*",
-    "react": "*"
   }
 }

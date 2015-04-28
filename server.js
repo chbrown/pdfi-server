@@ -1,6 +1,7 @@
 var http = require('http-enhanced');
 var logger = require('loge');
 var visible = require('visible');
+var controllers = require('./controllers');
 
 var escaper = new visible.Escaper({
   escapeSlash: true,
@@ -31,9 +32,7 @@ http.ServerResponse.prototype.die = function(error) {
   return this.text(message);
 };
 
-var controllers = require('./controllers');
-
-var server = module.exports = http.createServer(function(req, res) {
+module.exports = http.createServer(function(req, res) {
   controllers(req, res);
 })
 .on('listening', function() {

@@ -3,6 +3,7 @@ var path = require('path');
 var logger = require('loge');
 
 var yargs = require('yargs')
+  .usage('Usage: pdfi-server --uploads $HOME/pdfs')
   .describe({
     hostname: 'hostname to listen on',
     port: 'port to listen on',
