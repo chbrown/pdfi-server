@@ -28,7 +28,7 @@ http.ServerResponse.prototype.die = function(error) {
   if (this.statusCode == 200) {
     this.statusCode = 500;
   }
-  var message = error ? error.stack : 'Failure';
+  var message = (error && error.stack) ? error.stack : (error || 'Failure');
   return this.text(message);
 };
 
