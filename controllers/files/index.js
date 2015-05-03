@@ -99,8 +99,7 @@ R.get(/^\/files\/([^\/]+)$/, function(req, res, m) {
 /** GET /files/:name/document
 */
 R.get(/^\/files\/([^\/]+)\/document$/, function(req, res) {
-  var section_names = ['col1', 'col2'];
-  var document = req.pdf.getDocument(section_names);
+  var document = req.pdf.getDocument();
   res.json(document);
 });
 

@@ -5,6 +5,7 @@ var Router = require('regex-router');
 
 var pdfi_models = require('pdfi/models');
 var pdfi_font = require('pdfi/font');
+var pdfi_graphics = require('pdfi/graphics');
 var pdfi_parser_states = require('pdfi/parsers/states');
 
 var R = new Router(function(req, res) {
@@ -40,7 +41,9 @@ R.get(/\/content-stream/, function(req, res) {
   var stream_string_iterable = new lexing.StringIterator(stream_string);
   var operations = new pdfi_parser_states.CONTENT_STREAM(stream_string_iterable, 1024).read();
 
-  return res.json({operations: operations});
+  var spans = pdfi_graphics.renderContentStreamText(content_stream);
+
+  res.json({operations: operations, spans: spans});
 });
 
 /** GET /files/:name/objects/:object_number/font?generation:number=0
@@ -48,7 +51,7 @@ R.get(/\/content-stream/, function(req, res) {
 R.get(/\/font/, function(req, res) {
   var font_Model = new pdfi_models.Model(req.pdf, req.object);
   var font = pdfi_font.Font.fromModel(font_Model);
-  res.json({Mapping: font.encodingMapping || null});
+  res.json({encoding: font.encoding});
 });
 
 module.exports = function(req, res) {
