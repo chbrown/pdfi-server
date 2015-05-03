@@ -2,7 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var path = require('path');
 var fs = require('fs');
-var url = require('url');
+var child_process = require('child_process');
 var formidable = require('formidable');
 
 var logger = require('loge');
@@ -101,6 +101,21 @@ R.get(/^\/files\/([^\/]+)$/, function(req, res, m) {
 R.get(/^\/files\/([^\/]+)\/document$/, function(req, res) {
   var document = req.pdf.getDocument();
   res.json(document);
+});
+
+/** POST /files/:name/open
+Open the given PDF in Preview.app or whatever.
+*/
+R.post(/^\/files\/([^\/]+)\/open$/, function(req, res, m) {
+  var name = decodeURIComponent(m[1]);
+  child_process.spawn('open', [name], {
+    cwd: files_dirpath,
+    stdio: 'ignore',
+    detached: true,
+  }).on('close', function(code) {
+    if (code !== 0) return res.die(code);
+    res.json({message: 'Opened ' + name});
+  }).unref();
 });
 
 R.any(/^\/files\/([^\/]+)\/objects/, require('./objects'));
