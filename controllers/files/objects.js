@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var url = require('url');
+var logger = require('loge');
 var lexing = require('lexing');
 var Router = require('regex-router');
 
@@ -41,9 +42,24 @@ R.get(/\/content-stream/, function(req, res) {
   var stream_string_iterable = new lexing.StringIterator(stream_string);
   var operations = new pdfi_parser_states.CONTENT_STREAM(stream_string_iterable, 1024).read();
 
-  var spans = pdfi_graphics.renderContentStreamText(content_stream);
+  var spans = [];
+  try {
+    spans = pdfi_graphics.renderContentStreamText(content_stream);
+  }
+  catch (exc) {
+    logger.error('renderContentStreamText error', exc);
+  }
 
   res.json({operations: operations, spans: spans});
+});
+
+/** GET /files/:name/objects/:object_number/graphics?generation:number=0
+*/
+R.get(/\/graphics/, function(req, res) {
+  var content_stream = new pdfi_models.ContentStream(req.pdf, req.object);
+
+  var document_canvas = pdfi_graphics.renderContentStream(content_stream);
+  res.json({canvas: document_canvas});
 });
 
 /** GET /files/:name/objects/:object_number/font?generation:number=0
