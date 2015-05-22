@@ -19,7 +19,7 @@ In the user interface, page numbers are 1-based.
 In the pdf representation, they are 0-based.
 */
 R.get(/\/pages\/(\d+)$/, function(req, res) {
-  var document_canvas = pdfi_graphics.renderPage(req.page);
+  var document_canvas = pdfi_graphics.renderPage(req.page, false);
   res.json(document_canvas);
 });
 

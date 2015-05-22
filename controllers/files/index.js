@@ -10,6 +10,8 @@ var Router = require('regex-router');
 
 var pdfi = require('pdfi');
 var pdfi_PDF = require('pdfi/PDF');
+var pdfi_graphics = require('pdfi/graphics');
+var pdfi_Arrays = require('pdfi/Arrays');
 
 var _pdf_cache = {};
 pdfi.setLoggerLevel(logger.level);
@@ -99,8 +101,16 @@ R.get(/^\/files\/([^\/]+)$/, function(req, res, m) {
 /** GET /files/:name/document
 */
 R.get(/^\/files\/([^\/]+)\/document$/, function(req, res) {
-  var document = req.pdf.getDocument();
-  res.json(document);
+  var paper = req.pdf.getDocument();
+
+  var spans = pdfi_Arrays.flatMap(req.pdf.pages, function(page) {
+    return pdfi_graphics.renderPage(page).spans;
+  });
+
+  var fontSizes = spans.map(function(textSpan) { return textSpan.fontSize; });
+  var fontSize_quartiles = pdfi_Arrays.quantile(fontSizes, 4);
+
+  res.json({paper: paper, spans: spans, fontSize_quartiles: fontSize_quartiles});
 });
 
 /** POST /files/:name/open

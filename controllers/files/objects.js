@@ -36,21 +36,32 @@ R.get(/\/objects\/(\d+)(\?|$)/, function(req, res) {
 */
 R.get(/\/content-stream/, function(req, res) {
   var content_stream = new pdfi_models.ContentStream(req.pdf, req.object);
-
-  // TODO: wrap in a try-catch
   var stream_string = content_stream.buffer.toString('binary');
-  var stream_string_iterable = new lexing.StringIterator(stream_string);
-  var operations = new pdfi_parser_states.CONTENT_STREAM(stream_string_iterable, 1024).read();
+
+  var operations = [];
+  try {
+    var stream_string_iterable = new lexing.StringIterator(stream_string);
+    operations = new pdfi_parser_states.CONTENT_STREAM(stream_string_iterable, 1024).read();
+  }
+  catch (exc) {
+    return res.die('Content Stream error: ' + exc.message);
+  }
+
+  res.json({operations: operations});
+});
+
+R.get(/\/text-canvas/, function(req, res) {
+  var content_stream = new pdfi_models.ContentStream(req.pdf, req.object);
 
   var spans = [];
   try {
     spans = pdfi_graphics.renderContentStreamText(content_stream);
   }
   catch (exc) {
-    logger.error('renderContentStreamText error', exc);
+    return res.die('Text canvas error: ' + exc.message);
   }
 
-  res.json({operations: operations, spans: spans});
+  res.json({spans: spans});
 });
 
 /** GET /files/:name/objects/:object_number/graphics?generation:number=0
@@ -58,15 +69,16 @@ R.get(/\/content-stream/, function(req, res) {
 R.get(/\/graphics/, function(req, res) {
   var content_stream = new pdfi_models.ContentStream(req.pdf, req.object);
 
-  var document_canvas = pdfi_graphics.renderContentStream(content_stream);
+  var document_canvas = pdfi_graphics.renderContentStream(content_stream, true, 0);
   res.json({canvas: document_canvas});
 });
 
 /** GET /files/:name/objects/:object_number/font?generation:number=0
 */
 R.get(/\/font/, function(req, res) {
-  var font_Model = new pdfi_models.Model(req.pdf, req.object);
-  var font = pdfi_font.Font.fromModel(font_Model);
+  var font_object = new pdfi_models.Model(req.pdf, req.object).object;
+  var Font = pdfi_font.Font.getConstructor(font_object.Subtype);
+  var font = new Font(req.pdf, font_object);
   res.json({encoding: font.encoding});
 });
 
