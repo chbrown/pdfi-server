@@ -69,8 +69,8 @@ R.get(/\/text-canvas/, function(req, res) {
 R.get(/\/graphics/, function(req, res) {
   var content_stream = new pdfi_models.ContentStream(req.pdf, req.object);
 
-  var document_canvas = pdfi_graphics.renderContentStream(content_stream, true, 0);
-  res.json({canvas: document_canvas});
+  var layout = pdfi_graphics.renderContentStreamLayout(content_stream, true, 0);
+  res.json({canvas: layout});
 });
 
 /** GET /files/:name/objects/:object_number/font?generation:number=0

@@ -101,10 +101,10 @@ R.get(/^\/files\/([^\/]+)$/, function(req, res, m) {
 /** GET /files/:name/document
 */
 R.get(/^\/files\/([^\/]+)\/document$/, function(req, res) {
-  var paper = req.pdf.getDocument();
+  var paper = req.pdf.renderPaper();
 
   var spans = pdfi_Arrays.flatMap(req.pdf.pages, function(page) {
-    return pdfi_graphics.renderPage(page).spans;
+    return pdfi_graphics.renderPageLayout(page).textSpans;
   });
 
   var fontSizes = spans.map(function(textSpan) { return textSpan.fontSize; });

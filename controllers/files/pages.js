@@ -14,13 +14,20 @@ R.get(/\/pages$/, function(req, res) {
   res.json(page_objects);
 });
 
-/** GET /files/:name/pages/:page_number
-In the user interface, page numbers are 1-based.
-In the pdf representation, they are 0-based.
+/** GET /files/:name/pages/layouts
 */
-R.get(/\/pages\/(\d+)$/, function(req, res) {
-  var document_canvas = pdfi_graphics.renderPage(req.page, false);
-  res.json(document_canvas);
+R.get(/\/pages\/layouts$/, function(req, res) {
+  var layouts = req.pdf.pages.map(function(page) {
+    return pdfi_graphics.renderPageLayout(page, false);
+  });
+  res.json(layouts);
+});
+
+/** GET /files/:name/pages/:page_number/layout
+*/
+R.get(/\/pages\/(\d+)\/layout$/, function(req, res) {
+  var layout = pdfi_graphics.renderPageLayout(req.page, false);
+  res.json(layout);
 });
 
 /** GET /files/:name/pages/:page_number/contents
@@ -36,7 +43,9 @@ module.exports = function(req, res) {
   if (m) {
     // set req.page if there is a page specified
     var page_number = parseInt(m[1], 10);
-    // subtract one to change indexing from 1-based to 0-based
+    // In the user interface, page numbers are 1-based.
+    // In the pdf representation, they are 0-based.
+    // So, subtract one to change indexing from 1-based to 0-based
     req.page = req.pdf.pages[page_number - 1];
   }
   R.route(req, res);
