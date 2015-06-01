@@ -15,7 +15,10 @@ var yargs = require('yargs')
     version: 'print version',
   })
   .boolean(['help', 'verbose', 'version'])
-  .alias({verbose: 'v'})
+  .alias({
+    v: 'verbose',
+    p: 'port',
+  })
   .default({
     uploads: path.join(__dirname, '..', 'tmp'),
     port: 8080,
