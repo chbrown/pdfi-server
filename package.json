@@ -24,8 +24,9 @@
     "lexing": "*",
     "lodash": "*",
     "loge": "*",
-    "pdfi": "*",
+    "pdfi": "^0.5.0",
     "regex-router": "*",
+    "visible": "*",
     "yargs": "*"
   }
 }
