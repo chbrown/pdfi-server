@@ -6,7 +6,7 @@
     "pdfi",
     "server"
   ],
-  "version": "0.2.2",
+  "version": "0.2.3",
   "homepage": "https://github.com/chbrown/pdfi-server",
   "repository": "git://github.com/chbrown/pdfi-server.git",
   "author": "Christopher Brown <io@henrian.com> (http://henrian.com)",
