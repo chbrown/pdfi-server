@@ -28,7 +28,18 @@ R.post(/^\/readFile(\?|$)/, function(req, res) {
   logger.info('writing temporary file: "%s"', filepath);
   req.pipe(fs.createWriteStream(filepath)).on('finish', function() {
     logger.info('reading %s from file: "%s"', type, filepath);
-    var data = pdfi.readFileSync(filepath, {type: type});
+    var data = {};
+    try {
+      data = pdfi.readFileSync(filepath, {type: type});
+    }
+    catch (exc) {
+      if (type === 'paper') {
+        data = {sections: [], error: exc.stack};
+      }
+      else {
+        return res.die(exc.message);
+      }
+    }
     res.json(data);
   });
 });
